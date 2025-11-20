@@ -8,7 +8,7 @@
 }
 *{box-sizing:border-box}
 .container{position:relative}
-.container{position:relative;z-index:2}
+.container{position:relative;z-index:3}
 
 body{
   margin:0;
@@ -28,18 +28,19 @@ body::before{
   z-index:-2;
   /* Rainbow / spectrum conic gradient */
   background: conic-gradient(from 0deg,
-    #ff0000 0deg,
-    #ff7f00 51deg,
-    #ffff00 102deg,
-    #00ff00 153deg,
-    #0000ff 204deg,
-    #4b0082 255deg,
-    #8b00ff 306deg,
-    #ff0000 360deg);
-  filter: blur(140px) saturate(140%);
-  opacity:0.7;
-  transform: scale(1.15) rotate(0deg);
-  animation: spin 30s linear infinite;
+    #ff0044 0deg,
+    #ff6b00 40deg,
+    #ffcf00 80deg,
+    #6bff00 120deg,
+    #00e6ff 165deg,
+    #005bff 210deg,
+    #8a00ff 255deg,
+    #ff00b3 300deg,
+    #ff0044 360deg);
+  filter: blur(180px) saturate(180%) contrast(1.05);
+  opacity:0.9;
+  transform: scale(1.25) rotate(0deg);
+  animation: spinPulse 18s linear infinite;
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -64,11 +65,122 @@ body::after{
   from{transform: scale(1.15) rotate(0deg)}
   to{transform: scale(1.15) rotate(360deg)}
 }
+
+@keyframes spinPulse{
+  0%{transform: scale(1.12) rotate(0deg); filter: blur(160px) saturate(140%); opacity:0.7}
+  25%{transform: scale(1.18) rotate(90deg); filter: blur(140px) saturate(160%); opacity:0.85}
+  50%{transform: scale(1.22) rotate(180deg); filter: blur(180px) saturate(150%); opacity:0.92}
+  75%{transform: scale(1.18) rotate(270deg); filter: blur(160px) saturate(140%); opacity:0.85}
+  100%{transform: scale(1.12) rotate(360deg); filter: blur(160px) saturate(140%); opacity:0.7}
+}
+
+/* Secondary animated rainbow layer for richer color blends */
+body::after{
+  content:'';
+  position:fixed;inset:0;z-index:-3;pointer-events:none;
+  background: conic-gradient(from 180deg,
+    rgba(255,80,120,0.85) 0deg,
+    rgba(255,180,60,0.75) 60deg,
+    rgba(120,255,160,0.7) 120deg,
+    rgba(80,160,255,0.7) 200deg,
+    rgba(200,80,255,0.75) 260deg,
+    rgba(255,80,120,0.85) 360deg);
+  filter: blur(220px) saturate(140%);
+  opacity:0.55;
+  transform: scale(1.3) rotate(20deg);
+  mix-blend-mode: overlay;
+  animation: spinReverse 36s linear infinite;
+}
+
+@keyframes spinReverse{
+  from{transform: scale(1.28) rotate(20deg)}
+  to{transform: scale(1.28) rotate(-340deg)}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none !important; }
+}
+
+/* ----- initial cracker / firework blast overlay ----- */
+/* overlay sits above the background and initially above content to show blast */
+.blast-hidden { display:none !important; }
+
+#blast-overlay{
+  position:fixed;inset:0;z-index:2;pointer-events:none;display:block;
+}
+.blast-center{
+  position:absolute;left:50%;top:28%;width:420px;height:420px;transform:translate(-50%,-50%);border-radius:50%;
+  /* avoid pure white: use warm glow colors */
+  background: radial-gradient(circle at 50% 45%, rgba(255,245,220,0.98) 0%, rgba(255,225,160,0.9) 6%, rgba(255,170,60,0.22) 14%, transparent 45%);
+  filter: blur(28px) saturate(120%);opacity:0;transform-origin:center;animation:burst 850ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+@keyframes burst{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(0.2)}
+  50%{opacity:0.95;transform:translate(-50%,-50%) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
+}
+
+.blast-particle{
+  position:absolute;left:50%;top:28%;width:10px;height:10px;border-radius:50%;opacity:1;transform-origin:center;
+  /* fallback warm tint if JS doesn't set color */
+  background: radial-gradient(circle, rgba(255,235,180,1) 0%, rgba(255,210,130,0.95) 25%, rgba(255,160,60,0.6) 40%, transparent 60%);
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,0.28));
+  will-change: transform, opacity;
+  animation-name: fly;animation-timing-function:cubic-bezier(.06,.7,.1,1);animation-fill-mode:forwards;
+}
+
+/* spark variant: bigger, brighter, longer-lived */
+.blast-particle.spark{
+  background: radial-gradient(circle, rgba(255,245,200,1) 0%, rgba(255,215,120,0.95) 30%, rgba(255,145,60,0.6) 55%, transparent 75%);
+  box-shadow: 0 8px 28px rgba(255,200,120,0.28), 0 2px 8px rgba(255,235,200,0.12) inset;
+}
+
+/* small trail attached to each particle to create a streak */
+.blast-particle::after{
+  content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-6px) rotate(0deg);
+  width:3px;height:22px;border-radius:2px;opacity:0.95;pointer-events:none;
+  /* use per-particle trail color from JS via --trail-color; fallback warm gradient */
+  background: linear-gradient(180deg, var(--trail-color, rgba(255,230,160,0.95)), rgba(0,0,0,0.08), transparent);
+  transform-origin: top center;
+}
+
+@keyframes fly{
+  0%{transform: rotate(var(--angle)) translateY(0) scale(1); opacity:1}
+  100%{transform: rotate(var(--angle)) translateY(calc(-1 * var(--dist))) scale(0.5); opacity:0}
+}
+
+/* ensure trails rotate with particle */
+.blast-particle{overflow:visible}
+
+/* subtle fade of the entire overlay after burst */
+.blast-fade{animation:fadeOut 1200ms ease-out forwards}
+@keyframes fadeOut{0%{opacity:1}100%{opacity:0}}
+
+/* accessibility: disable animation when reduced motion is set */
+@media (prefers-reduced-motion: reduce){
+  .blast-center, .blast-particle { animation: none !important; opacity:0 !important }
+}
+
+/* When blasting only show the timer elements and background; hide title/notes */
+.blasting .title{display:none !important}
+.blasting .text-muted{display:none !important}
+.blasting .label{display:none !important}
+.blasting .container{box-shadow:none}
 .title{
-  letter-spacing:6px;
+  letter-spacing:2px;
   font-weight:600;
-  color:rgba(255,255,255,0.85);
-  font-size:28px;
+  color:rgba(255,255,255,0.95);
+  font-size:40px;
+  margin:0 0 8px 0;
+  transform-origin:center;
+  animation: introText 900ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+@keyframes introText{
+  0%{opacity:0;transform:translateY(18px) scale(0.98)}
+  60%{opacity:1;transform:translateY(-4px) scale(1.01)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
 }
 .circle-wrap{
   position:relative;

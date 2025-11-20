@@ -1,15 +1,12 @@
 // Countdown timer with animated SVG circles
 (function(){
  
-  // dynamic targets: countdown to 76 days from now; live mode begins 1 day after that
-  const now = new Date();
-  const DAYS = 76; // dynamic length (days from now)
+  // Simple countdown: start now, countdown for 76 days
+  const DAYS = 76;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
-  const targetDate = new Date(now.getTime() + DAYS * MS_PER_DAY);
-  const liveStart = new Date(targetDate.getTime() + MS_PER_DAY); // live mode starts 1 day after target
-
-  // expose target text
+  const targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
   const targetText = document.getElementById('target-text');
+  if(targetText) targetText.textContent = targetDate.toLocaleString();
 
   const units = {
     days: {secs: 24*3600, max: DAYS},
@@ -36,112 +33,100 @@
 
   function update(){
     const now = new Date();
+    let diff = Math.max(0, targetDate - now);
 
-    // Choose mode: countdown, waiting (between target and liveStart), or live (count-up since liveStart)
-    if(now < targetDate){
-      // Countdown mode to targetDate
-      const diff = targetDate - now;
-      let rem = diff;
-      const days = Math.floor(rem / MS_PER_DAY); rem -= days * MS_PER_DAY;
-      const hours = Math.floor(rem / (3600*1000)); rem -= hours * 3600*1000;
-      const minutes = Math.floor(rem / (60*1000)); rem -= minutes * 60*1000;
-      const seconds = Math.floor(rem / 1000);
+    const days = Math.floor(diff / MS_PER_DAY); diff -= days * MS_PER_DAY;
+    const hours = Math.floor(diff / (3600*1000)); diff -= hours * 3600*1000;
+    const minutes = Math.floor(diff / (60*1000)); diff -= minutes * 60*1000;
+    const seconds = Math.floor(diff / 1000);
 
-      if(targetText) targetText.textContent = 'Countdown to: ' + targetDate.toLocaleString();
+    if(targetText) targetText.textContent = 'Target: ' + targetDate.toLocaleString();
 
-      // update numbers
-      if(numberEls.days) numberEls.days.textContent = String(days).padStart(2,'0');
-      if(numberEls.hours) numberEls.hours.textContent = String(hours).padStart(2,'0');
-      if(numberEls.minutes) numberEls.minutes.textContent = String(minutes).padStart(2,'0');
-      if(numberEls.seconds) numberEls.seconds.textContent = String(seconds).padStart(2,'0');
+    if(numberEls.days) numberEls.days.textContent = String(days).padStart(2,'0');
+    if(numberEls.hours) numberEls.hours.textContent = String(hours).padStart(2,'0');
+    if(numberEls.minutes) numberEls.minutes.textContent = String(minutes).padStart(2,'0');
+    if(numberEls.seconds) numberEls.seconds.textContent = String(seconds).padStart(2,'0');
 
-      // update progress: days fraction based on DAYS total
-      fgCircles.forEach(c=>{
-        const unit = c.dataset.unit;
-        let fraction = 0;
-        if(unit === 'days'){
-          fraction = (units.days.max - days) / units.days.max;
-        } else if(unit === 'hours'){
-          fraction = (units.hours.max - hours) / units.hours.max;
-        } else if(unit === 'minutes'){
-          fraction = (units.minutes.max - minutes) / units.minutes.max;
-        } else if(unit === 'seconds'){
-          fraction = (units.seconds.max - seconds) / units.seconds.max;
-        }
-        fraction = Math.max(0, Math.min(1, fraction));
-        const offset = c._circ * (1 - fraction);
-        c.style.strokeDashoffset = offset;
-      });
+    // update progress circles using units.max
+    fgCircles.forEach(c=>{
+      const unit = c.dataset.unit;
+      let v = 0, max = 1;
+      if(unit === 'days'){ v = days; max = units.days.max; }
+      else if(unit === 'hours'){ v = hours; max = units.hours.max; }
+      else if(unit === 'minutes'){ v = minutes; max = units.minutes.max; }
+      else if(unit === 'seconds'){ v = seconds; max = units.seconds.max; }
+      const fraction = Math.max(0, Math.min(1, (max - v) / max));
+      const offset = c._circ * (1 - fraction);
+      c.style.strokeDashoffset = offset;
+    });
 
-    } else if(now >= targetDate && now < liveStart){
-      // Waiting period: show countdown to liveStart (1 day after target)
-      const diff = liveStart - now;
-      let rem = diff;
-      const days = Math.floor(rem / MS_PER_DAY); rem -= days * MS_PER_DAY;
-      const hours = Math.floor(rem / (3600*1000)); rem -= hours * 3600*1000;
-      const minutes = Math.floor(rem / (60*1000)); rem -= minutes * 60*1000;
-      const seconds = Math.floor(rem / 1000);
-
-      if(targetText) targetText.textContent = 'Live mode starts: ' + liveStart.toLocaleString();
-
-      if(numberEls.days) numberEls.days.textContent = String(days).padStart(2,'0');
-      if(numberEls.hours) numberEls.hours.textContent = String(hours).padStart(2,'0');
-      if(numberEls.minutes) numberEls.minutes.textContent = String(minutes).padStart(2,'0');
-      if(numberEls.seconds) numberEls.seconds.textContent = String(seconds).padStart(2,'0');
-
-      fgCircles.forEach(c=>{
-        const unit = c.dataset.unit;
-        let fraction = 0;
-        // For this short period, treat days as 1-day max
-        if(unit === 'days'){
-          fraction = (1 - days) / 1;
-        } else if(unit === 'hours'){
-          fraction = (24 - hours) / 24;
-        } else if(unit === 'minutes'){
-          fraction = (60 - minutes) / 60;
-        } else if(unit === 'seconds'){
-          fraction = (60 - seconds) / 60;
-        }
-        fraction = Math.max(0, Math.min(1, fraction));
-        const offset = c._circ * (1 - fraction);
-        c.style.strokeDashoffset = offset;
-      });
-
-    } else {
-      // Live mode: count up since liveStart
-      const diff = now - liveStart; // ms elapsed since liveStart
-      let rem = diff;
-      const daysElapsed = Math.floor(rem / MS_PER_DAY); rem -= daysElapsed * MS_PER_DAY;
-      const hours = Math.floor(rem / (3600*1000)); rem -= hours * 3600*1000;
-      const minutes = Math.floor(rem / (60*1000)); rem -= minutes * 60*1000;
-      const seconds = Math.floor(rem / 1000); const ms = rem % 1000;
-
-      if(targetText) targetText.textContent = 'Live since: ' + liveStart.toLocaleString();
-
-      if(numberEls.days) numberEls.days.textContent = String(daysElapsed).padStart(2,'0');
-      if(numberEls.hours) numberEls.hours.textContent = String(hours).padStart(2,'0');
-      if(numberEls.minutes) numberEls.minutes.textContent = String(minutes).padStart(2,'0');
-      if(numberEls.seconds) numberEls.seconds.textContent = String(seconds).padStart(2,'0');
-
-      // progress fractions reflect progress through current day/hour/minute/second
-      const dayFraction = (hours*3600 + minutes*60 + seconds + ms/1000) / (24*3600);
-      const hourFraction = (minutes*60 + seconds + ms/1000) / 3600;
-      const minuteFraction = (seconds + ms/1000) / 60;
-      const secondFraction = ms / 1000;
-
-      const fractions = {days: dayFraction, hours: hourFraction, minutes: minuteFraction, seconds: secondFraction};
-
-      fgCircles.forEach(c=>{
-        const unit = c.dataset.unit;
-        const frac = Math.max(0, Math.min(1, fractions[unit] || 0));
-        const offset = c._circ * (1 - frac);
-        c.style.strokeDashoffset = offset;
-      });
+    // stop when finished
+    if(targetDate - now <= 0){
+      clearInterval(timer);
     }
   }
 
-  // run update immediately and frequently for smooth progress
+  // run update immediately and every 500ms for sync
   update();
-  const timer = setInterval(update, 100);
+  const timer = setInterval(update, 500);
+
+// initial cracker/firework blast: create particles and a bright center, then remove
+(function(){
+  try{
+    const overlay = document.getElementById('blast-overlay');
+    if(!overlay) return;
+
+    // mark blasting state so we can hide non-timer UI
+    document.documentElement.classList.add('blasting');
+
+    // bright center
+    const center = document.createElement('div');
+    center.className = 'blast-center';
+    overlay.appendChild(center);
+
+    // create particle pieces - more particles and some spark variants for cracker-like effect
+    const particleCount = 44;
+    for(let i=0;i<particleCount;i++){
+      const p = document.createElement('div');
+      p.className = 'blast-particle';
+      // decide if this is a spark (bigger, longer)
+      const isSpark = Math.random() > 0.72;
+      if(isSpark) p.classList.add('spark');
+
+      // random angle and distance (sparks go farther)
+      const angle = Math.round(Math.random()*360);
+      const dist = (isSpark ? 220 + Math.round(Math.random()*360) : 120 + Math.round(Math.random()*260));
+      p.style.setProperty('--angle', angle + 'deg');
+      p.style.setProperty('--dist', dist + 'px');
+
+      // random size and color tint
+      const size = (isSpark ? 8 + Math.round(Math.random()*24) : 5 + Math.round(Math.random()*10));
+      p.style.width = size + 'px'; p.style.height = size + 'px';
+
+      // color tint using HSL hue spread for rainbow pieces
+      const hue = Math.round(Math.random()*360);
+      const light = isSpark ? '88%' : '92%';
+      const baseColor = `hsl(${hue} 100% ${light})`;
+      // set CSS var for trail and fallback background
+      p.style.setProperty('--trail-color', `hsla(${hue},100%,${isSpark?70:78}%,0.95)`);
+      p.style.background = `radial-gradient(circle, ${baseColor} 0%, hsl(${hue} 90% 65%) 30%, transparent 60%)`;
+
+      const dur = isSpark ? (900 + Math.round(Math.random()*1400)) : (600 + Math.round(Math.random()*800));
+      p.style.animationDuration = dur + 'ms';
+      p.style.animationDelay = (Math.random()*160) + 'ms';
+      overlay.appendChild(p);
+    }
+
+    // fade overlay after the burst and clear blasting state when done
+    setTimeout(()=>{
+      overlay.classList.add('blast-fade');
+    }, 1100);
+    // remove from DOM a little later and remove blasting class so rest of UI returns
+    setTimeout(()=>{
+      if(overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      document.documentElement.classList.remove('blasting');
+    }, 2300);
+  }catch(e){console.error(e)}
+})();
 
 })();

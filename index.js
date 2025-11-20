@@ -4,7 +4,26 @@
   // Simple countdown: start now, countdown for 76 days
   const DAYS = 76;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
-  const targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
+  const STORAGE_KEY = 'countdownTarget';
+
+  // Persistent target date: read from localStorage or create on first load
+  let targetDate;
+  (function initTarget(){
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const parsed = new Date(saved);
+      if(!isNaN(parsed)){
+        targetDate = parsed;
+      } else {
+        targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
+        localStorage.setItem(STORAGE_KEY, targetDate.toISOString());
+      }
+    } else {
+      targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
+      localStorage.setItem(STORAGE_KEY, targetDate.toISOString());
+    }
+  })();
+
   const targetText = document.getElementById('target-text');
   if(targetText) targetText.textContent = targetDate.toLocaleString();
 
@@ -68,7 +87,7 @@
 
   // run update immediately and every 500ms for sync
   update();
-  const timer = setInterval(update, 500);
+  let timer = setInterval(update, 500);
 
 // initial cracker/firework blast: create particles and a bright center, then remove
 (function(){

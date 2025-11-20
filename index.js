@@ -1,8 +1,8 @@
 // Countdown timer with animated SVG circles
 (function(){
-  // By default target is 7 days from now; change `targetDate` if you want a specific date
+ 
   const now = new Date();
-  const defaultTarget = new Date(now.getTime() + 76*24*60*60*1000);
+  const defaultTarget = new Date(now.getTime() + 77*24*60*60*1000);
   let targetDate = defaultTarget;
 
   // expose target text

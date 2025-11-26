@@ -18,6 +18,7 @@
         targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
         localStorage.setItem(STORAGE_KEY, targetDate.toISOString());
       }
+
     } else {
       targetDate = new Date(Date.now() + DAYS * MS_PER_DAY);
       localStorage.setItem(STORAGE_KEY, targetDate.toISOString());

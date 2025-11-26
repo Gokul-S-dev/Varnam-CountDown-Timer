@@ -28,6 +28,7 @@
   const targetText = document.getElementById('target-text');
   if(targetText) targetText.textContent = targetDate.toLocaleString();
 
+
   const units = {
     days: {secs: 24*3600, max: DAYS},
     hours: {secs: 3600, max:24},

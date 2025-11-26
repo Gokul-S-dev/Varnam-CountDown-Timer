@@ -12,6 +12,7 @@
   --title-size: 40px;
   --blast-size: 420px;
 }
+
 *{box-sizing:border-box}
 .container{position:relative}
 .container{position:relative;z-index:3}
